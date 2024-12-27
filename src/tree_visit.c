@@ -1,3 +1,30 @@
+/*
+ * This file is part of DTC: Decision Tree in C-lang project.
+ *
+ * DTC is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * DTC is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with DTC. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/**
+ * @file tree_visit.c
+ * @author Antonio Emmanuele (antony.35.ae@gmail.com)
+ * @brief  Contains the function implementations for visiting a decision tree and an ensemble of trees.
+ * @version 0.1
+ * @date 2024-12-27
+ * 
+ * @copyright Copyright (c) 2024 Antonio Emmanuele
+ * 
+ */
 #include "tree_visit.h"
 #include "assert.h"
 
