@@ -48,7 +48,11 @@ typedef struct node_t {
  * @param[out] classification_result Pointer to store the classification result.
  * @return int Status of the visit operation.
  * @retval CLASSIFICATION_OK Classification was successful.
+<<<<<<< HEAD
  * @retval CLASSIFICATION_PRUNED 
+=======
+ * @retval CLASSIFICATION_PRUNED Node was pruned, therefore classification_results contains a negative value.
+>>>>>>> master
  */
 int visit_tree(const node_t* const root_node, const feature_type_t* const features, class_t* const classification_result);
 
