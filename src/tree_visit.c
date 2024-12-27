@@ -28,8 +28,19 @@
 #include "tree_visit.h"
 #include "assert.h"
 
+/**
+ * @brief Macro used to check if a leaf node is reached, i.e. if the current node is a leaf node.
+ * 
+ */
 #define IS_LEAF(current_node) ((NULL != current_node -> left_node) && (NULL != current_node -> right_node))
+
+#if COMPILE_PRUNED 
+/**
+ * @brief Macro used to check if the current node is pruned, i.e. if the current node is NULL.
+ * 
+ */
 #define IS_PRUNED(current_node) (NULL == current_node)
+#endif
 
 int num_classes = 256;
 
@@ -37,26 +48,36 @@ int visit_tree(const node_t* const root_node, const feature_type_t * const featu
     node_t* current_node = root_node; 
     int to_ret = CLASSIFICATION_DEFAULT;
     uint8_t is_leaf = IS_LEAF(current_node);
+#if COMPILE_PRUNED
     uint8_t is_pruned = IS_PRUNED(current_node);
-
     while( !is_leaf && !is_pruned){
+#else
+    while(!is_leaf){
+#endif
         if(features[current_node->feature_index] < current_node->threshold){
             current_node = current_node -> left_child;
         }
         else{
             current_node = current_node -> right_child;
         }
+#if COMPILE_PRUNED
         is_pruned = IS_PRUNED(current_node);
         // Avoid NULL memory access
         if (!is_pruned)
             is_leaf = IS_LEAF(current_node);
+#else
+        is_leaf = IS_LEAF(current_node);
+#endif
     }
-
+#if COMPILE_PRUNED
     if(is_pruned){
         to_ret = CLASSIFICATION_PRUNED;
         *classification_result = to_ret;
     }
     else if (is_leaf){
+#else
+    if(is_leaf){
+#endif
         to_ret = CLASSIFICATION_OK;
         *classification_result = current_node -> class;
     }
@@ -99,14 +120,18 @@ int majority_voting(const class_t* const classifications,
 
     // Count valid classifications
     for (uint16_t i = 0; i < classification_elements; i++) {
+#if COMPILED_PRUNING
         if (0 <= classifications[i] ) { // Ignore classifications < 0
+#endif
             class_counts[classifications[i]]++;
             // Update the most popular class
             if (max_count < class_counts[classifications[i]] ) {
                 max_count = class_counts[classifications[i]];
                 max_class = classifications[i];
             }
+#if COMPILED_PRUNING
         }
+#endif
     }
     // Update only if needed.
     if(max_count > 0)

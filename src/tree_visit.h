@@ -30,9 +30,13 @@
 
 #include "stdint.h"
 
+#define COMPILE_PRUNED 0            /**< If set to 1, the code compile pruning handling */
+
 #define CLASSIFICATION_DEFAULT 0    /**< Classification default return value. Theoretically, never employed. */
 #define CLASSIFICATION_OK 1         /**< No draw or pruned conditions occurred during classification. */
+#if COMPILE_PRUNED
 #define CLASSIFICATION_PRUNED -1    /**< The tree was pruned, i.e. the current_node, during the execution of tree_visiting, is NULL and a leaf is not reached. */
+#endif
 #define CLASSIFICATION_DRAW -2      /**< Two or more classes share the majority voting condition. */
 
 extern int num_classes; /**< Number of classes. Initialized in the .c file, can be externally inizialized from main.*/
@@ -75,11 +79,7 @@ typedef struct node_t {
  * @param[out] classification_result Pointer to store the classification result.
  * @return int Status of the visit operation.
  * @retval CLASSIFICATION_OK Classification was successful.
-<<<<<<< HEAD
- * @retval CLASSIFICATION_PRUNED 
-=======
  * @retval CLASSIFICATION_PRUNED Node was pruned, therefore classification_results contains a negative value.
->>>>>>> master
  */
 int visit_tree(const node_t* const root_node, const feature_type_t* const features, class_t* const classification_result);
 
