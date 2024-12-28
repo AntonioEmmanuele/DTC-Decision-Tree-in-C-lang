@@ -27,6 +27,7 @@
  */
 #include "tree_visit.h"
 #include "assert.h"
+#include "string.h"
 
 #if USE_POINTERS
 /**
@@ -53,7 +54,7 @@
 int num_classes = 256;
 
 int visit_tree(const node_t* const root_node, const feature_type_t * const features, class_t* const classification_result){
-    node_t* current_node = root_node; 
+    const node_t* current_node = root_node; 
     int to_ret = CLASSIFICATION_DEFAULT;
     uint8_t is_leaf = IS_LEAF(current_node);
 #if COMPILE_PRUNED
@@ -131,7 +132,8 @@ int majority_voting(const class_t* const classifications,
      */
 
     // Cardinality of class counts can be externally redefined
-    uint16_t class_counts[num_classes] = {0}; 
+    uint16_t class_counts[num_classes];
+    memset(class_counts, 0, num_classes * sizeof(uint16_t)); 
     // Max_class is the most popular class.
     class_t max_class = -1;
     // Count of occurrences of the most popular class
@@ -162,11 +164,12 @@ int visit_rf_majority_voting(   node_t* const trees[],
                                 const uint16_t number_trees, 
                                 const feature_type_t* const features,
                                 class_t* const classification_result,
-                                uint16_t * const num_votes;){
+                                uint16_t * const num_votes){
     
-    int to_ret = CLASSIFICATION_RESULT;
+    int to_ret = CLASSIFICATION_DEFAULT;
     // Classess per each different tree
-    class_t class_per_tree[number_trees] = {-1};
+    class_t class_per_tree[number_trees];
+    memset(class_per_tree, -1, number_trees * sizeof(class_t));
     to_ret = visit_ensemble(trees, number_trees, features, class_per_tree);
     // Do the majority voting.
     *num_votes = majority_voting(class_per_tree, number_trees, classification_result);

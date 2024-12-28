@@ -42,10 +42,9 @@ class ConfigTrailer(ctypes.Structure):
         ("num_trees", ctypes.c_uint16),
     ]
 
-def pmml_parser(file_path):
+def pmml_parser(file_path, out_path):
     tree = ET.parse(file_path)
     root = tree.getroot()
-    trailer = ConfigTrailer()
     namespaces = {}
     namespaces["pmml"] = get_xmlns_uri(root)
     if namespaces is None:
@@ -55,15 +54,38 @@ def pmml_parser(file_path):
     model_features, model_classes = get_features_and_classes_from_pmml(root, namespaces)
     print("Model features: ", model_features)
     print("Model classes: ", model_classes)
-    trailer._fields_["num_classes"] = len(model_classes)
-    trailer._fields_["num_features"] = len(model_features)
-    trailer._fields_["num_trees"] = 0
+    trailer = ConfigTrailer(len(model_classes), len(model_features), 0)
+
+    trailer_bytes = bytearray(trailer)
+    with open(out_path, "wb") as out_file:
+        out_file.write(trailer_bytes)
+"""         for tree in root.find("pmml:MiningModel", namespaces).findall("pmml:Segmentation", namespaces):
+            print("Tree found")
+            trailer._fields_["num_trees"] += 1
+            for node in tree.find("pmml:TreeModel", namespaces).findall("pmml:Node", namespaces):
+                print("Node found")
+                node_struct = TreeNode()
+                node_struct.feature_index = int(node.attrib["feature"])
+                node_struct.threshold = int(float(node.attrib["threshold"]))
+                if "score" in node.attrib:
+                    node_struct.class = model_classes.index(node.attrib["score"])
+                else:
+                    node_struct.class = -1
+                if "left" in node.attrib:
+                    node_struct.left_node = int(node.attrib["left"])
+                else:
+                    node_struct.left_node = -1
+                if "right" in node.attrib:
+                    node_struct.right_node = int(node.attrib["right"])
+                else:
+                    node_struct.right_node = -1
+                node_bytes = bytearray(node_struct)
+                out_file.write(node_bytes) """
 
 def joblib_parser(file_path):
     print("Not implemented yet")
     exit(1)
 
-@staticmethod
 def get_xmlns_uri(elem):
     """ This function is directly taken from the pyALS-RF project. See https://github.com/SalvatoreBarone/pyALS-RF/tree/master for more info. """
     if elem.tag[0] == "{":
@@ -88,13 +110,17 @@ def get_features_and_classes_from_pmml(root, pmml_namespace):
                 model_classes.append(element.attrib['value'].replace('-', '_'))
     return model_features, model_classes
 
-def parse(model_source : str):
+def write_bin(out_file):
+    return 0
+
+def parse(model_source : str, out_path: str):
         if model_source.endswith(".pmml"):
-            pmml_parser(model_source)
+            pmml_parser(model_source, out_path)
         elif model_source.endswith(".joblib"):
             joblib_parser(model_source)
 
 if __name__ == "__main__":
     model = "../example_dataset/statlog_segment/rf_5/rf_5.pmml"
-    parse(model)
+    out_bin = "../examples/desktop/dtc_parse/statlog_rf5.bin"
+    parse(model, out_bin)
     print("Hello World")

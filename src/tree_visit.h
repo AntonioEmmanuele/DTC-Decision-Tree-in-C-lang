@@ -115,13 +115,15 @@ int visit_ensemble(node_t* const trees[],  const uint16_t number_trees, const fe
  * @param[in] trees Array of pointers to the root nodes of the trees.
  * @param[in] number_trees Number of trees in the ensemble.
  * @param[in] features Array of feature values.
- * @param[out] classification_result Pointer to store the final classification result.
+ * @param[out] classification_result Pointer to store the final classification result. 
+ * @param[out] num_votes Pointer containing the number of votes of the majority class.
  * @return int Status of the visit operation.
  * @retval CLASSIFICATION_OK Classification was successful.
  * @retval CLASSIFICATION_PRUNED At least the classification of a single tree resulted in CLASSIFICATION_PRUNED.
  * @retval CLASSIFICATION_DRAW A draw condition during majority voting occured (not implemented).
  */
-int visit_rf_majority_voting(node_t* const trees[],  const uint16_t number_trees, const feature_type_t* const features, class_t* const classification_result);
+int visit_rf_majority_voting(node_t* const trees[],  const uint16_t number_trees, const feature_type_t* const features, class_t* const classification_result, uint16_t * const num_votes);
+
 
 /**
  * @brief Determines the most popular classification result from an array of classifications.
