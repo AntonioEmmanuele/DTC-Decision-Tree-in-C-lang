@@ -31,7 +31,7 @@
 #include "stdint.h"
 
 #define COMPILE_PRUNED 0            /**< If set to 1, the code compile pruning handling */
-
+#define USE_POINTERS   0            /**< If set to 1, the code explicitly use pointers to nodes. */   
 #define CLASSIFICATION_DEFAULT 0    /**< Classification default return value. Theoretically, never employed. */
 #define CLASSIFICATION_OK 1         /**< No draw or pruned conditions occurred during classification. */
 #if COMPILE_PRUNED
@@ -41,6 +41,14 @@
 
 extern int num_classes; /**< Number of classes. Initialized in the .c file, can be externally inizialized from main.*/
 
+
+#if !USE_POINTERS
+/**
+ * @typedef nodes_idx_t
+ * @brief A type representing the index of a node in the tree.
+ */
+typedef int32_t nodes_idx_t;
+#endif
 /**
  * @typedef class_t
  * @brief A type representing the classification result.
@@ -67,8 +75,13 @@ typedef struct node_t {
     feature_idx_t feature_index; /**< Index of the feature used for splitting. */
     feature_type_t threshold;    /**< Threshold value for the feature. */
     class_t class;               /**< Classification result if the node is a leaf. */
+#if USE_POINTERS
     struct node_t* left_child;   /**< Pointer to the left child node. */
     struct node_t* right_child;  /**< Pointer to the right child node. */
+#else 
+    nodes_idx_t left_node;          /**< Index of the left child node. */
+    nodes_idx_t right_node;         /**< Index of the right child node. */
+#endif
 } node_t;
 
 /**

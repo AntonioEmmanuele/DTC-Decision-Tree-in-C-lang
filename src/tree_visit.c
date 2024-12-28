@@ -28,12 +28,20 @@
 #include "tree_visit.h"
 #include "assert.h"
 
+#if USE_POINTERS
 /**
  * @brief Macro used to check if a leaf node is reached, i.e. if the current node is a leaf node.
  * 
  */
 #define IS_LEAF(current_node) ((NULL != current_node -> left_node) && (NULL != current_node -> right_node))
-
+#else
+/**
+ * @brief Macro used to check if a leaf node is reached, i.e. if the current node is a leaf node.
+ *          If no pointers are used then the macro checks whether the left and right nodes are different from -1.
+ * 
+ */
+#define IS_LEAF(current_node) ((-1 != current_node -> left_node) && (-1 != current_node -> right_node))
+#endif
 #if COMPILE_PRUNED 
 /**
  * @brief Macro used to check if the current node is pruned, i.e. if the current node is NULL.
@@ -54,12 +62,23 @@ int visit_tree(const node_t* const root_node, const feature_type_t * const featu
 #else
     while(!is_leaf){
 #endif
+
+#if USE_POINTERS
         if(features[current_node->feature_index] < current_node->threshold){
             current_node = current_node -> left_child;
         }
         else{
             current_node = current_node -> right_child;
         }
+#else
+        if(features[current_node->feature_index] < current_node->threshold){
+            current_node = &root_node[current_node -> left_node];
+        }
+        else{
+            current_node = &root_node[current_node -> right_node];
+        }
+#endif
+
 #if COMPILE_PRUNED
         is_pruned = IS_PRUNED(current_node);
         // Avoid NULL memory access
@@ -93,7 +112,7 @@ int visit_ensemble(node_t* const trees[],  const uint16_t number_trees, const fe
     for(tree_idx = 0U; tree_idx < number_trees; tree_idx ++){
         // If it is CLASSIFICATION_OK then it remains classification ok.
         // Otherwise, if just once it becames classification pruned, then it returns.
-        to_ret = to_ret && (CLASSIFICATION_OK == visit_tree(trees[tree_idx], features, &class_per_tree[tree_idx]));
+        ret_helper = ret_helper && (CLASSIFICATION_OK == visit_tree(trees[tree_idx], features, &class_per_tree[tree_idx]));
     }
     return ret_helper;
 }
