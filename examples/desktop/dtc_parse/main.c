@@ -1,15 +1,10 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
-
+#include "../../../src/tree_conf.h"
 #define FILENAME "statlog_rf5.bin"
 
-// Define the C structure
-typedef struct {
-    uint16_t field1;
-    uint16_t field2;
-    uint16_t field3;
-} bin_trailer_t;
+
 
 int main() {
     // Open the binary file for reading
@@ -31,9 +26,9 @@ int main() {
     fclose(file);
 
     // Print the results
-    printf("Field1: %u\n", data.field1);
-    printf("Field2: %u\n", data.field2);
-    printf("Field3: %u\n", data.field3);
+    printf("Num Classes: %u\n", data.num_classes);
+    printf("Num Features: %u\n", data.num_features);
+    printf("Num Trees: %u\n", data.num_trees);
 
     return EXIT_SUCCESS;
 }

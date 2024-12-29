@@ -8,7 +8,7 @@ EXAMPLE_DIR = .
 OBJ_DIR = $(EXAMPLE_DIR)/obj
 
 # Source files
-SRC_FILES = $(SRC_DIR)/tree_visit.c
+SRC_FILES = $(SRC_DIR)/tree_visit.c $(SRC_DIR)/tree_conf.h
 MAIN_FILE = $(EXAMPLE_DIR)/main.c
 
 # Object files
