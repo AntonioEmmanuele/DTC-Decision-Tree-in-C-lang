@@ -21,7 +21,7 @@ int main() {
         fclose(file);
         return EXIT_FAILURE;
     }
-
+    
     // Close the file
     fclose(file);
 

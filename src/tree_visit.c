@@ -53,6 +53,44 @@
 
 int num_classes = 256;
 
+/**
+ * @typedef Operator function pointer definition
+ * 
+ */
+typedef uint8_t (*operator_fun_t)(const feature_type_t, const feature_type_t);
+
+/**
+ * @brief Less or equal compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a <= b, 0 otherwise
+ */
+static uint8_t less_equal(const feature_type_t a, const feature_type_t b){
+    return a <= b;
+}
+
+/**
+ * @brief Greater than compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a > b, 0 otherwise
+ */
+static uint8_t greater_than(const feature_type_t a, const feature_type_t b){
+    return a > b;
+}
+
+/**
+ * @brief Equal compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a == b, 0 otherwise
+ */
+static uint8_t equal(const feature_type_t a, const feature_type_t b){
+    return a == b;
+}
+
+static operator_fun_t operators[] = {less_equal, greater_than, equal};
+
 int visit_tree(const node_t* const root_node, const feature_type_t * const features, class_t* const classification_result){
     const node_t* current_node = root_node; 
     int to_ret = CLASSIFICATION_DEFAULT;
@@ -65,14 +103,14 @@ int visit_tree(const node_t* const root_node, const feature_type_t * const featu
 #endif
 
 #if USE_POINTERS
-        if(features[current_node->feature_index] < current_node->threshold){
+        if(operators[current_node->operator](features[current_node->feature_index], current_node->threshold)){
             current_node = current_node -> left_child;
         }
         else{
             current_node = current_node -> right_child;
         }
 #else
-        if(features[current_node->feature_index] < current_node->threshold){
+        if(operators[current_node->operator](features[current_node->feature_index], current_node->threshold)){
             current_node = &root_node[current_node -> left_node];
         }
         else{

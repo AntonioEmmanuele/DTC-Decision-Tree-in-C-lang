@@ -29,7 +29,7 @@ class TreeNode(ctypes.Structure):
     _fields_ = [
         ("feature_index", ctypes.c_uint16), 
         ("threshold", ctypes.c_int32),
-        ("class", ctypes.c_int16),
+        ("class_res", ctypes.c_int16),
         ("left_node", ctypes.c_int32 ), # For now, it is easier to use the int32_t for direct addressing
         ("right_node", ctypes.c_int32), # even if the C code has the support for pointers. This makes initialization a lot easier.
     ]
@@ -55,32 +55,60 @@ def pmml_parser(file_path, out_path):
     print("Model features: ", model_features)
     print("Model classes: ", model_classes)
     trailer = ConfigTrailer(len(model_classes), len(model_features), 0)
-
+    node_counters = []
+    segmentation = root.find("pmml:MiningModel/pmml:Segmentation", namespaces)
+    if segmentation is not None:  # If the model has a segmentation it consists of multiple trees  
+        print("Segmentation found")
+        for tree_id, segment in enumerate(segmentation.findall("pmml:Segment", namespaces)):
+            tree_model_root = segment.find("pmml:TreeModel", namespaces).find("pmml:Node", namespaces)
+            trailer.num_trees += 1
+            print("Tree found")
+            """  
+            tree = self.get_tree_model_from_pmml(str(tree_id), tree_model_root)
+            self.trees.append(tree)
+            logger.debug(f"Done parsing tree {tree_id}") """
+    else:
+        print("No segmentation found")
+        trailer.num_trees += 1
+    
     trailer_bytes = bytearray(trailer)
     with open(out_path, "wb") as out_file:
         out_file.write(trailer_bytes)
-"""         for tree in root.find("pmml:MiningModel", namespaces).findall("pmml:Segmentation", namespaces):
+        print("Trailer written")
+
+
+"""         tree_model_root = root.find("pmml:TreeModel", namespaces).find(
+            "pmml:Node", namespaces)
+        tree = self.get_tree_model_from_pmml("0", tree_model_root) """
+
+"""     with open(out_path, "wb") as out_file:
+        out_file.write(trailer_bytes)
+        for tree in root.find("pmml:MiningModel", namespaces).findall("pmml:Segmentation", namespaces):
             print("Tree found")
-            trailer._fields_["num_trees"] += 1
+            trailer.num_trees += 1
+            node_counters = 0
             for node in tree.find("pmml:TreeModel", namespaces).findall("pmml:Node", namespaces):
+                to_increase = 0 # As we are going to write the left and right node, we need to increase the counter by at maximum 2 values
                 print("Node found")
                 node_struct = TreeNode()
                 node_struct.feature_index = int(node.attrib["feature"])
-                node_struct.threshold = int(float(node.attrib["threshold"]))
+                node_struct.threshold = float(node.attrib["threshold"])
                 if "score" in node.attrib:
-                    node_struct.class = model_classes.index(node.attrib["score"])
+                    node_struct.class_res = model_classes.index(node.attrib["score"])
                 else:
-                    node_struct.class = -1
+                    node_struct.class_res = -1
                 if "left" in node.attrib:
-                    node_struct.left_node = int(node.attrib["left"])
+                    node_struct.left_node = node_counters + 1 
+                    to_increase += 1
                 else:
                     node_struct.left_node = -1
                 if "right" in node.attrib:
-                    node_struct.right_node = int(node.attrib["right"])
+                    node_struct.right_node = node_counters + 2
+                    to_increase += 1
                 else:
                     node_struct.right_node = -1
-                node_bytes = bytearray(node_struct)
-                out_file.write(node_bytes) """
+                node_counters += to_increase
+ """
 
 def joblib_parser(file_path):
     print("Not implemented yet")
@@ -110,6 +138,38 @@ def get_features_and_classes_from_pmml(root, pmml_namespace):
                 model_classes.append(element.attrib['value'].replace('-', '_'))
     return model_features, model_classes
 
+def get_tree_model_from_pmml(namespaces, tree_model_root, id=0):
+    tree = []
+    get_tree_nodes_from_pmml_recursively(namespaces, tree_model_root, tree, id)
+    return tree
+
+def get_tree_nodes_from_pmml_recursively(namespaces, element_tree_node, parent_tree_node, id=0):
+    # Find the children of the current node.
+    children = element_tree_node.findall("pmml:Node", namespaces)
+    assert len(children) <= 2, f"Only binary trees are supported. Aborting. {children}"
+    # For each children.
+    for child in children:
+        predicate = None
+        if compound_predicate := child.find("pmml:CompoundPredicate", namespaces):
+            predicate = next(item for item in compound_predicate.findall("pmml:SimplePredicate", namespaces) if item.attrib["operator"] != "isMissing")
+        else:
+            predicate = child.find("pmml:SimplePredicate", namespaces)
+        if predicate is not None:
+            feature = predicate.attrib['field'].replace('-', '_')
+            operator = predicate.attrib['operator']
+            threshold_value = predicate.attrib['value']
+            if operator in ('equal', 'lessThan', 'greaterThan'):
+                parent_tree_node.feature = feature
+                parent_tree_node.operator = operator
+                parent_tree_node.threshold_value = threshold_value
+        # # If the child is not a leaf node, create a new tree node and recursively call the function.
+        # if child.find("pmml:Node", namespaces) is not None:
+        #     new_tree_node = Node(f"Node_{child.attrib['id']}" if "id" in child.attrib else f"Node_{id}", parent = parent_tree_node, feature = "", operator = "", threshold_value = "", boolean_expression = boolean_expression)
+        #     get_tree_nodes_from_pmml_recursively(namespaces, child, new_tree_node, id + 1)
+        # # Otherwise, simply return the function.
+        # else:
+        #     Node(f"Node_{child.attrib['id']}" if "id" in child.attrib else f"Node_{id}", parent = parent_tree_node, score = child.attrib['score'].replace('-', '_'), boolean_expression = boolean_expression)
+            
 def write_bin(out_file):
     return 0
 
@@ -120,7 +180,7 @@ def parse(model_source : str, out_path: str):
             joblib_parser(model_source)
 
 if __name__ == "__main__":
-    model = "../example_dataset/statlog_segment/rf_5/rf_5.pmml"
+    model = "../datasets/statlog_segment/rf_5/rf_5.pmml"
     out_bin = "../examples/desktop/dtc_parse/statlog_rf5.bin"
     parse(model, out_bin)
     print("Hello World")

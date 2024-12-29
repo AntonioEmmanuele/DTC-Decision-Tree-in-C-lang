@@ -49,6 +49,13 @@ extern int num_classes; /**< Number of classes. Initialized in the .c file, can 
  */
 typedef int32_t nodes_idx_t;
 #endif
+
+/**
+ * @typedef Definition of an operator type.
+ * 
+ */
+typedef uint8_t operator_t; 
+
 /**
  * @typedef class_t
  * @brief A type representing the classification result.
@@ -72,6 +79,7 @@ typedef double feature_type_t;
  * @brief A structure representing a node in the decision tree.
  */
 typedef struct node_t {
+    operator_t operator;         /**< Operator used for the split. */
     feature_idx_t feature_index; /**< Index of the feature used for splitting. */
     feature_type_t threshold;    /**< Threshold value for the feature. */
     class_t class;               /**< Classification result if the node is a leaf. */
