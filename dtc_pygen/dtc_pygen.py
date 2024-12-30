@@ -21,8 +21,14 @@ You should have received a copy of the GNU General Public License
 along with DTC. If not, see <https://www.gnu.org/licenses/>.
 """
 import xml.etree.ElementTree as ET
-import struct
 import ctypes
+import argparse
+import joblib 
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+from jinja2 import Environment, FileSystemLoader
 
 """ Map of operators to c code functions. If the array in C is altered then this map must be changed accordingly."""
 operators_map = {
@@ -210,7 +216,6 @@ def pmml_parser(file_path, out_path):
             tree = get_tree_model_from_pmml(namespaces, tree_model_root, model_features, 0)
             trees.append(tree)
             #print_tree(tree)
-
     else:
         print("No segmentation found")
         trailer.num_trees += 1
@@ -249,9 +254,85 @@ def parse(model_source : str, out_path: str):
         elif model_source.endswith(".joblib"):
             joblib_parser(model_source)
 
+""" Generate a c module that contains a number_of_inputs, taken to X_test to the module.
+    X_test : Set of possible inputs.
+                npy array 
+    dataset_outcomes: Outcomes of the dataset for each input.
+    file_path : path in which the file is saved.
+"""
+def render_module_test_header(X_test, dataset_outcomes, file_path):
+    file_loader = FileSystemLoader(searchpath = "./")
+    env = Environment(loader = file_loader)
+    module_template = env.get_template("model_test.h.template")
+    module_test = module_template.render(
+                                    input_size      = len(X_test),
+                                    feature_size    = len(X_test[0]),
+                                    inputs          = X_test,
+                                    ds_outs         = dataset_outcomes,
+                                    )
+    with open(f"{file_path}", "w") as out_file:
+        out_file.write(module_test)
+
+def gen_test_vec(model_source, dataset_source, target_column, out_path):
+    if model_source.endswith(".pmml"):
+        print("Can not reconvert the model from PMML to sklearn")
+        print("Using the entire dataset to generate the test vectors")
+        print("This consists in a simple accuracy comparison..")
+        model = None
+    elif model_source.endswith(".joblib"):
+        print("Loaded joblib model")
+        model = joblib.load(model_source)
+    
+    if model is not None:
+        print("Loaded model")
+        # For now not supported the joblib
+    
+    # Load the dataset
+    print("Loading dataset")
+    df = pd.read_csv(dataset_source, sep=";")
+    dataset_outs = df[target_column].to_numpy()
+    inputs = df.drop(columns=[target_column]).values
+    print("Rendering dataset")
+    render_module_test_header(inputs, dataset_outs, out_path)   
+    print(f"Test vectors generated in: {out_path}")
 if __name__ == "__main__":
-    model = "../datasets/statlog_segment/rf_5/rf_5.pmml"
-    out_bin = "../examples/desktop/dtc_parse/statlog_rf5.bin"
-    # print(ctypes.sizeof(TreeNode))
-    # exit(1)
-    parse(model, out_bin)
+    parser = argparse.ArgumentParser(description="Process and print NodeConfig data from a file.")
+    parser.add_argument("command", type=str, help="The command to execute.")
+    parser.add_argument("--input_model",  type=str, help="Path to the PMML or joblib files containing the model to serialize.", default =  "../datasets/statlog_segment/rf_5/rf_5.pmml")
+    parser.add_argument("--output_bin",   type=str, help="Path to the output file to write the binary file.", default = "../examples/desktop/dtc_parse/statlog_rf5.bin")
+    parser.add_argument("--input_dataset",  type=str, help="Path of the input dataset to parse", default =  "../datasets/statlog_segment/rf_5/test_dataset.csv")
+    parser.add_argument("--output_test_vec",  type=str, help="Path to the output header containing the classification inputs and their outcomes", default = "../examples/desktop/inference_accuracy/model_test.h")
+    parser.add_argument("--target_column",  type=str, help="Name of the target column of the input dataset", default = "Outcome")
+    parser.add_argument("--csv_separator",  type=str, help="Separator of the csv file of the dataset", default = ";")
+    args = parser.parse_args()
+
+    if args.command == "parse":
+        if args.input_model is None:
+            print("The input model file is required.")
+            exit(1)
+        if args.output_bin is None or not args.output_bin.endswith(".bin"):
+            print("Invalid output file. The output file must be a binary file.")
+            exit(1)
+        parse(args.input_model, args.output_bin)
+    elif args.command == "gen_test_vec":
+        if args.input_model is None:
+            print("The input model file is required for the generation of the C-test vectors.")
+            exit(1)
+        if args.input_dataset is None:
+            print("The input dataset file is required for the generation of C-test vectors.")
+            exit(1)
+        if args.output_test_vec is None or not args.output_test_vec.endswith(".h"):    
+            print("Invalid output file. The output file must be C header file.")
+            exit(1) 
+        if args.target_column is None:
+            print("The target column is required for the generation of the C-test vectors.")
+            exit(1)
+        gen_test_vec(args.input_model, args.input_dataset, args.target_column, args.output_test_vec)    
+    else:
+        print("Invalid command.")
+        exit(1)    
+    # model = "../datasets/statlog_segment/rf_5/rf_5.pmml"
+    # out_bin = "../examples/desktop/dtc_parse/statlog_rf5.bin"
+    # # print(ctypes.sizeof(TreeNode))
+    # # exit(1)
+    # parse(model, out_bin)

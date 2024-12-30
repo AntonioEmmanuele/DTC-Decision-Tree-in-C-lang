@@ -4,7 +4,7 @@
 #include "../../../src/tree_conf.h"
 #include "../../../src/tree_visit.h"
 #define FILENAME "statlog_rf5.bin"
-
+#include "model_test.h"
 
 
 int main() {
@@ -41,13 +41,27 @@ int main() {
         }    
         printf("Num nodes %u\n", num_nodes);
     }
-    // Print each tree
-    for(int t = 0; t < tree_trailer.num_trees; t++){
-        printf("Tree %u\n", t);
-        for(int n = 0; n < num_nodes; n++){
-            printf("Node %u: Operator : %u, FeatureIdx: %u, Thd: %f,  Score : %d, Right : %d, Left %d\n", n, trees[t][n].operator, trees[t][n].feature_index, trees[t][n].threshold, trees[t][n].class, trees[t][n].right_node, trees[t][n].left_node);
+
+    class_t classification_result;
+    uint16_t num_votes;
+    uint16_t correctly_classified = 0;
+    int status = CLASSIFICATION_OK;
+    for(int i = 0; i < 231; i++){
+
+        status = visit_rf_majority_voting(trees, tree_trailer.num_trees, inputs[i], &classification_result, &num_votes);
+        if(status == CLASSIFICATION_OK){
+            if(classification_result == dataset_outs[i]){
+                correctly_classified++;
+            }
         }
+        else{
+            printf("Classification failed for sample %d\n", i);
+            break;
+        }
+        printf("Classification result for sample %d : %d, Num votes: %d\n", i, classification_result, num_votes);
     }
+    printf("Accuracy : %f \n", (float) correctly_classified / 231);
+    
     // Free different trees mem areas
     for(int i = 0; i < tree_trailer.num_trees; i++){
         free(trees[i]);

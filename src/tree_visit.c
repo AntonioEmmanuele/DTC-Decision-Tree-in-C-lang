@@ -28,7 +28,7 @@
 #include "tree_visit.h"
 #include "assert.h"
 #include "string.h"
-
+#include "stdio.h"
 #if USE_POINTERS
 /**
  * @brief Macro used to check if a leaf node is reached, i.e. if the current node is a leaf node.
@@ -238,6 +238,10 @@ int visit_rf_majority_voting(   node_t* const trees[],
     class_t class_per_tree[number_trees];
     memset(class_per_tree, -1, number_trees * sizeof(class_t));
     to_ret = visit_ensemble(trees, number_trees, features, class_per_tree);
+    for(int i = 0; i < number_trees; i++){
+        printf("Classification result for tree %d : %d\n", i, class_per_tree[i]);
+    }
+    exit(1);
     // Do the majority voting.
     *num_votes = majority_voting(class_per_tree, number_trees, classification_result);
     return to_ret; 

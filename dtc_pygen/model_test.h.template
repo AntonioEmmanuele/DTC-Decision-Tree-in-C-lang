@@ -1,0 +1,15 @@
+#ifndef MODEL_TEST_H
+#define MODEL_TEST_H
+static double inputs[{{input_size}}][{{feature_size}}] = {
+    {% for ipt in inputs -%}
+        { {% for el in ipt -%} {{el}}  {{"," if not loop.last else ""}}
+        {% endfor %} }
+    {{"," if not loop.last else ""}}
+    {% endfor %}
+};
+
+static int16_t dataset_outs[{{input_size}}] = { 
+    {% for el in ds_outs -%} {{el}}  {{"," if not loop.last else ""}}
+    {% endfor %}
+};
+#endif
