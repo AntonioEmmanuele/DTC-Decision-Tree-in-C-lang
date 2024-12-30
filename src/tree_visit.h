@@ -54,7 +54,7 @@ typedef int32_t nodes_idx_t;
  * @typedef Definition of an operator type.
  * 
  */
-typedef uint8_t operator_t; 
+typedef uint16_t operator_t;  // uint16 for alignment
 
 /**
  * @typedef class_t
@@ -81,8 +81,7 @@ typedef double feature_type_t;
 typedef struct node_t {
     operator_t operator;         /**< Operator used for the split. */
     feature_idx_t feature_index; /**< Index of the feature used for splitting. */
-    feature_type_t threshold;    /**< Threshold value for the feature. */
-    class_t class;               /**< Classification result if the node is a leaf. */
+    class_t class;                  /**< Classification result if the node is a leaf. */
 #if USE_POINTERS
     struct node_t* left_child;   /**< Pointer to the left child node. */
     struct node_t* right_child;  /**< Pointer to the right child node. */
@@ -90,6 +89,8 @@ typedef struct node_t {
     nodes_idx_t left_node;          /**< Index of the left child node. */
     nodes_idx_t right_node;         /**< Index of the right child node. */
 #endif
+    feature_type_t threshold;    /**< Threshold value for the feature. */
+
 } node_t;
 
 /**

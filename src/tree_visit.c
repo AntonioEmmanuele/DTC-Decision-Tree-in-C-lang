@@ -65,8 +65,28 @@ typedef uint8_t (*operator_fun_t)(const feature_type_t, const feature_type_t);
  * @param[in] b Second value to compare
  * @return uint8_t 1 if a <= b, 0 otherwise
  */
-static uint8_t less_equal(const feature_type_t a, const feature_type_t b){
+static uint8_t less_or_equal(const feature_type_t a, const feature_type_t b){
     return a <= b;
+}
+
+/**
+ * @brief Less than compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a < b, 0 otherwise
+ */
+static uint8_t less_than(const feature_type_t a, const feature_type_t b){
+    return a < b;
+}
+
+/**
+ * @brief Greater or equal than compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a >= b, 0 otherwise
+ */
+static uint8_t greater_or_equal(const feature_type_t a, const feature_type_t b){
+    return a >= b;
 }
 
 /**
@@ -89,7 +109,16 @@ static uint8_t equal(const feature_type_t a, const feature_type_t b){
     return a == b;
 }
 
-static operator_fun_t operators[] = {less_equal, greater_than, equal};
+/**
+ * @brief Not equal compare function
+ * @param[in] a First value to compare
+ * @param[in] b Second value to compare
+ * @return uint8_t 1 if a != b, 0 otherwise
+ */
+static uint8_t not_equal(const feature_type_t a, const feature_type_t b){
+    return a != b;
+}
+static operator_fun_t operators[] = {less_or_equal, less_than, greater_or_equal, greater_than, equal, not_equal};
 
 int visit_tree(const node_t* const root_node, const feature_type_t * const features, class_t* const classification_result){
     const node_t* current_node = root_node; 
