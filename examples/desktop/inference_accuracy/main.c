@@ -60,7 +60,7 @@ int main() {
         }
         printf("Classification result for sample %d : %d, Num votes: %d\n", i, classification_result, num_votes);
     }
-    printf("Accuracy : %f \n", (float) correctly_classified / 231);
+    printf("Number of correctly classified samples %u Accuracy : %f \n",correctly_classified, ((float) correctly_classified / 231)*100);
     
     // Free different trees mem areas
     for(int i = 0; i < tree_trailer.num_trees; i++){
