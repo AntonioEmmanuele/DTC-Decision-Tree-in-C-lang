@@ -114,11 +114,6 @@ Performs majority voting on the classification results of an ensemble of trees.
 - `CLASSIFICATION_PRUNED`: At least one tree resulted in `CLASSIFICATION_PRUNED`.
 - `CLASSIFICATION_DRAW`: A draw condition occurred during majority voting.
 
-## Usage
-TODO
-To use the functions provided in this repository, include the `tree_visit.h` header file in your project and link against the compiled `tree_visit.c` source file.
-
-
 
 ## License
 This project is licensed under the GNU General Public License v3.0 (GPLv3) - see the [LICENSE](LICENSE) file for details.
