@@ -2,7 +2,7 @@
 #define MODEL_TEST_H
 static unsigned int num_inputs = 231;
 
-static double inputs[][19] = {
+static float inputs[][19] = {
     { 202.0  ,
         41.0  ,
         9.0  ,

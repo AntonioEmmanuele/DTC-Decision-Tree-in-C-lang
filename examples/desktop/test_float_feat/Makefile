@@ -1,6 +1,6 @@
 # Compiler and flags
 CC = gcc
-CFLAGS ?= -Wall -Wextra -I../../../src -DUSE_FLOAT=0
+CFLAGS = -Wall -Wextra -I../../../src -DUSE_FLOAT=1
 
 # Directories
 SRC_DIR = ../../../src

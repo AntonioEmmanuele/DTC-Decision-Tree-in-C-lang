@@ -30,8 +30,20 @@
 
 #include "stdint.h"
 
+/** Compilation flags. */
+
+#ifndef COMPILE_PRUNED
 #define COMPILE_PRUNED 0            /**< If set to 1, the code compile pruning handling */
+#endif
+
+#ifndef USE_POINTERS
 #define USE_POINTERS   0            /**< If set to 1, the code explicitly use pointers to nodes. */   
+#endif
+
+#ifndef USE_FLOAT
+#define USE_FLOAT      1            /**< If set to 1, the code uses float instead of double for feature values. */
+#endif
+
 #define CLASSIFICATION_DEFAULT 0    /**< Classification default return value. Theoretically, never employed. */
 #define CLASSIFICATION_OK 1         /**< No draw or pruned conditions occurred during classification. */
 #if COMPILE_PRUNED
@@ -68,11 +80,20 @@ typedef int16_t class_t;
  */
 typedef uint16_t feature_idx_t;
 
+#if USE_FLOAT
+/**
+ * @typedef feature_type_t
+ * @brief A type representing the value of a feature.
+ */
+typedef float feature_type_t;
+#else
 /**
  * @typedef feature_type_t
  * @brief A type representing the value of a feature.
  */
 typedef double feature_type_t;
+#endif
+
 
 /**
  * @struct node_t

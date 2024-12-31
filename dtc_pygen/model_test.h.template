@@ -1,6 +1,8 @@
 #ifndef MODEL_TEST_H
 #define MODEL_TEST_H
-static double inputs[{{input_size}}][{{feature_size}}] = {
+static unsigned int num_inputs = {{num_inputs}};
+
+static {{feature_type}} inputs[{{input_size}}][{{feature_size}}] = {
     {% for ipt in inputs -%}
         { {% for el in ipt -%} {{el}}  {{"," if not loop.last else ""}}
         {% endfor %} }

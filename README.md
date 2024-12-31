@@ -1,4 +1,4 @@
-# Tree Visiting
+# DTC: Decision Tree in C lang
 
 This repository contains the implementation of a decision tree and random forest classifier in C lang. The main functionalities include visiting a decision tree, visiting an ensemble of trees, and performing majority voting on the classification results.
 
@@ -34,6 +34,7 @@ and generate an header test file containing C-input vectors and correct classess
 For more infos, please check the `examples/desktop/dtc_parse` and `examples/desktop/inference_accuracy` folders. 
 
 ## Configurator commands
+-- `feature_type`: C-type of the used features. It is mandatory for all commands.
 # parse
 This command is issued when a model (PMML or Joblib) is inputted and the corresponding configuration binary is generated.
 Args:
@@ -51,6 +52,10 @@ Args:
                      equal to the ones of the classified output.
 - `target_column`: Column of the dataset mantaining the classification results.
 - `output_test_vec`: Name,-- i.e. the path--, of the output header file containing the test vectors and classification results.
+
+## C-lib Compilation Flags
+Here are reported the compilation flags of the implemented functionalities. Not tested ones, are not reported as they are not meant to be used.
+- `USE_FLOAT`: If use float is set to 1 then the library used float for the feature representation. Otherwise double is used.
 
 ## C-lib Functions (tree_visit.c)
 

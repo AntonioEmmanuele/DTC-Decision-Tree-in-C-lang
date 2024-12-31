@@ -58,14 +58,31 @@ def find_feature_index_by_name(data, input_name):
 
 # Define the tree node c structure
 class TreeNode(ctypes.Structure):
-    _fields_ = [
+    def __init__(self, *args, **kw):
+        super().__init__(*args, **kw)
+
+    # _fields_ = [
+    #     ("operator", ctypes.c_uint16),
+    #     ("feature_index", ctypes.c_uint16), 
+    #     ("class_res", ctypes.c_int16),
+    #     ("left_node", ctypes.c_int32 ), # For now, it is easier to use the int32_t for direct addressing
+    #     ("right_node", ctypes.c_int32), # even if the C code has the support for pointers. This makes initialization a lot easier.
+    #     ("threshold", ctypes.c_double),
+    # ]
+
+feature_types = {
+    "float": ctypes.c_float,
+    "double": ctypes.c_double,
+}
+
+def set_fields(tree_node_class: TreeNode, feature_type: str):
+    tree_node_class._fields_ = [
         ("operator", ctypes.c_uint16),
         ("feature_index", ctypes.c_uint16), 
         ("class_res", ctypes.c_int16),
         ("left_node", ctypes.c_int32 ), # For now, it is easier to use the int32_t for direct addressing
         ("right_node", ctypes.c_int32), # even if the C code has the support for pointers. This makes initialization a lot easier.
-        ("threshold", ctypes.c_double),
-
+        ("threshold", feature_type),
     ]
 
 # Internal representation of the node used during the parsing.
@@ -260,12 +277,13 @@ def parse(model_source : str, out_path: str):
     dataset_outcomes: Outcomes of the dataset for each input.
     file_path : path in which the file is saved.
 """
-def render_module_test_header(X_test, dataset_outcomes, file_path):
+def render_module_test_header(X_test, dataset_outcomes, feature_type, file_path):
     file_loader = FileSystemLoader(searchpath = "./")
     env = Environment(loader = file_loader)
     module_template = env.get_template("model_test.h.template")
     module_test = module_template.render(
-                                    input_size      = len(X_test),
+                                    num_inputs      = len(X_test),
+                                    feature_type    = feature_type,
                                     feature_size    = len(X_test[0]),
                                     inputs          = X_test,
                                     ds_outs         = dataset_outcomes,
@@ -273,7 +291,7 @@ def render_module_test_header(X_test, dataset_outcomes, file_path):
     with open(f"{file_path}", "w") as out_file:
         out_file.write(module_test)
 
-def gen_test_vec(model_source, dataset_source, target_column, out_path):
+def gen_test_vec(model_source, dataset_source, target_column, feature_type, out_path):
     if model_source.endswith(".pmml"):
         print("Can not reconvert the model from PMML to sklearn")
         print("Using the entire dataset to generate the test vectors")
@@ -293,11 +311,14 @@ def gen_test_vec(model_source, dataset_source, target_column, out_path):
     dataset_outs = df[target_column].to_numpy()
     inputs = df.drop(columns=[target_column]).values
     print("Rendering dataset")
-    render_module_test_header(inputs, dataset_outs, out_path)   
+    render_module_test_header(inputs, dataset_outs, feature_type, out_path)   
     print(f"Test vectors generated in: {out_path}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process and print NodeConfig data from a file.")
     parser.add_argument("command", type=str, help="The command to execute.")
+    parser.add_argument("--feature_type",  type=str, help="Type of the feature in use.", default =  "float")
     parser.add_argument("--input_model",  type=str, help="Path to the PMML or joblib files containing the model to serialize.", default =  "../datasets/statlog_segment/rf_5/rf_5.pmml")
     parser.add_argument("--output_bin",   type=str, help="Path to the output file to write the binary file.", default = "../examples/desktop/dtc_parse/statlog_rf5.bin")
     parser.add_argument("--input_dataset",  type=str, help="Path of the input dataset to parse", default =  "../datasets/statlog_segment/rf_5/test_dataset.csv")
@@ -305,7 +326,12 @@ if __name__ == "__main__":
     parser.add_argument("--target_column",  type=str, help="Name of the target column of the input dataset", default = "Outcome")
     parser.add_argument("--csv_separator",  type=str, help="Separator of the csv file of the dataset", default = ";")
     args = parser.parse_args()
-
+    # Setup the feature type of the TreeNode class.
+    if args.feature_type is None or args.feature_type not in feature_types.keys():
+        print(f"Invalid feature type. The feature type must be in {feature_types.keys()}")
+        exit(1)
+    set_fields(TreeNode, feature_types[args.feature_type])
+    # Select the correct command.
     if args.command == "parse":
         if args.input_model is None:
             print("The input model file is required.")
@@ -327,7 +353,7 @@ if __name__ == "__main__":
         if args.target_column is None:
             print("The target column is required for the generation of the C-test vectors.")
             exit(1)
-        gen_test_vec(args.input_model, args.input_dataset, args.target_column, args.output_test_vec)    
+        gen_test_vec(args.input_model, args.input_dataset, args.target_column, args.feature_type, args.output_test_vec)    
     else:
         print("Invalid command.")
         exit(1)    
