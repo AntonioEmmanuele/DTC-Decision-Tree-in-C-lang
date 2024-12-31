@@ -1,13 +1,55 @@
 # Tree Visiting
 
 This repository contains the implementation of a decision tree and random forest classifier in C lang. The main functionalities include visiting a decision tree, visiting an ensemble of trees, and performing majority voting on the classification results.
+
 ## Folders
 - `src`: Folder containing the src files in C lang.
+- `dtc_pygen`: Folder containing the python source files used for the generation of the binary configuration configuration.
+- `datasets`: Folder containing example datasets.
+- `examples`: Folder containing example source code.
 
 ## Files
 
-- `src/tree_visit.h`: Header file containing type definitions and function declarations.
-- `src/tree_visit.c`: Source file containing the implementation of the functions declared in the header file.
+- `src/tree_visit.h`: Header file containing Decision Tree type definitions and function declarations.
+- `src/tree_visit.c`: Source file containing the implementation of the functions declared in tree_visit.h header file.
+- `src/tree_conf.h`:  Header file containing Configuration type definitions and configuration function declarations.
+- `src/tree_conf.c`:  Source file containing the implementation of the functions declared in tree_conf.h header file.
+
+## Binary Configuration
+In this library a Tree Based model (Decision Tree or Random Forest) is transformed in a binary file by the dtc_pygen configurator.
+Using this approach, the PMML or the Joblib files are inputted to the configurator via the parse command and the binary is generated.
+Structure of this binary is described as follow.
+# Structure
+- `bin_trailer_t`: Header of the binary containing informations such as the number of trees, the number of classes and the number of features.
+Then, iterated for each tree (whose number is specified in the trailer).
+
+- `uint16_t number_of_nodes`: Number of nodes of the specific decision tree.
+- `node_t nodes[number_of_nodes]`: The array of nodes of the parsed Decision Tree. Such nodes are already parsed and do not require any
+                                    additional post-processing step. Such array of nodes can be directly inputted to the C-fun visit to 
+                                    visit the decision tree classifier.
+ 
+In addition, if the dataset is available, the dtc_pygen configurator, using the `gen_test_vec` command can parse the dataset 
+and generate an header test file containing C-input vectors and correct classess in order to validate the accuracy of the parsed tree.
+For more infos, please check the `examples/desktop/dtc_parse` and `examples/desktop/inference_accuracy` folders. 
+
+## Configurator commands
+# parse
+This command is issued when a model (PMML or Joblib) is inputted and the corresponding configuration binary is generated.
+Args:
+    - `input_model`: Path of the PMML or Joblib of the input model.
+    - `output_bin`:  Path of the output binary.
+     
+
+# gen_test_vec
+This command takes as input either the input model as well as the input datatet. It generates in output the C-test 
+vectors used to validate the accuracy of the final classifier.
+Args:
+-   `input_model`: Joblib (can not be done with PMML) of the model used to generate the correctly classified output of the model.
+                    This function however is currently not implemented.
+-   `input_dataset`: Dataset on which the model is trained. It should be equal to the CSV of the test set as the generated test-vectors are
+                     equal to the ones of the classified output.
+-   `target_column`: Column of the dataset mantaining the classification results.
+-   `output_test_vec`: Name,-- i.e. the path--, of the output header file containing the test vectors and classification results.
 
 ## C-lib Functions (tree_visit.c)
 
