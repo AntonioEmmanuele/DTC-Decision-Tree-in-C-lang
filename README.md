@@ -34,7 +34,7 @@ and generate an header test file containing C-input vectors and correct classess
 For more infos, please check the `examples/desktop/dtc_parse` and `examples/desktop/inference_accuracy` folders. 
 
 ## Configurator commands
--- `feature_type`: C-type of the used features. It is mandatory for all commands.
+- `feature_type`: C-type of the used features. It is mandatory for all commands.
 # parse
 This command is issued when a model (PMML or Joblib) is inputted and the corresponding configuration binary is generated.
 Args:
