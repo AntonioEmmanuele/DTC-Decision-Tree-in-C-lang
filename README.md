@@ -21,6 +21,7 @@ Using this approach, the PMML or the Joblib files are inputted to the configurat
 Structure of this binary is described as follow.
 # Structure
 - `bin_trailer_t`: Header of the binary containing informations such as the number of trees, the number of classes and the number of features.
+
 Then, iterated for each tree (whose number is specified in the trailer).
 
 - `uint16_t number_of_nodes`: Number of nodes of the specific decision tree.
@@ -36,20 +37,20 @@ For more infos, please check the `examples/desktop/dtc_parse` and `examples/desk
 # parse
 This command is issued when a model (PMML or Joblib) is inputted and the corresponding configuration binary is generated.
 Args:
-    - `input_model`: Path of the PMML or Joblib of the input model.
-    - `output_bin`:  Path of the output binary.
+- `input_model`: Path of the PMML or Joblib of the input model.
+- `output_bin`:  Path of the output binary.
      
 
 # gen_test_vec
 This command takes as input either the input model as well as the input datatet. It generates in output the C-test 
 vectors used to validate the accuracy of the final classifier.
 Args:
--   `input_model`: Joblib (can not be done with PMML) of the model used to generate the correctly classified output of the model.
+- `input_model`: Joblib (can not be done with PMML) of the model used to generate the correctly classified output of the model.
                     This function however is currently not implemented.
--   `input_dataset`: Dataset on which the model is trained. It should be equal to the CSV of the test set as the generated test-vectors are
+- `input_dataset`: Dataset on which the model is trained. It should be equal to the CSV of the test set as the generated test-vectors are
                      equal to the ones of the classified output.
--   `target_column`: Column of the dataset mantaining the classification results.
--   `output_test_vec`: Name,-- i.e. the path--, of the output header file containing the test vectors and classification results.
+- `target_column`: Column of the dataset mantaining the classification results.
+- `output_test_vec`: Name,-- i.e. the path--, of the output header file containing the test vectors and classification results.
 
 ## C-lib Functions (tree_visit.c)
 
