@@ -35,7 +35,7 @@ operators_map = {
     "lessOrEqual": 0,
     "lessThan": 1,
     "greaterOrEqual": 2,
-    "greatrThan": 3,
+    "greaterThan": 3,
     "equal": 4,
     "notEqual": 5,
 }
@@ -142,6 +142,16 @@ def get_tree_model_from_pmml(namespaces, tree_model_root, features, id=0):
     get_tree_nodes_from_pmml_recursively(namespaces, tree_model_root, tree, features, id)
     return tree
 
+""" This function is used to recursively construct a decision tree like structure of a decision tree classifier.
+    namespaces = Root namespace previously initialized.
+    element_tree_node = Current node for which the two children are inspected.
+    nodes_list  =       list of nodes of the decision tree, every time a new node is discovered then it is appended to this list.
+    features    =       List of feature names of the model. This is used for mapping the feature of a node to its index in the feature vector.
+                        IT IS FUNDAMENTAL that the order of features (i.e. its indexing) is identical to the one of input sample.
+                        So check the PMML before writing C code :) 
+    id          =       No use for now. 
+
+"""
 def get_tree_nodes_from_pmml_recursively(namespaces, element_tree_node, nodes_list, features, id=0):
     # Find the children of the current node.
     children = element_tree_node.findall("pmml:Node", namespaces)
@@ -151,45 +161,51 @@ def get_tree_nodes_from_pmml_recursively(namespaces, element_tree_node, nodes_li
     # These two node corresponds to a single node Node_x.
     assert len(children) == 2, f"Only binary trees are supported. Aborting. {children}" 
     children_list = []
-    # For each children.
+    # Find the left and right children and save their attributes. 
     for child in children:
         predicate = None
+        # Parse the predicate.
         if compound_predicate := child.find("pmml:CompoundPredicate", namespaces):
             predicate = next(item for item in compound_predicate.findall("pmml:SimplePredicate", namespaces) if item.attrib["operator"] != "isMissing")
         else:
             predicate = child.find("pmml:SimplePredicate", namespaces)
+        # Get infos.
         if predicate is not None:
             feature = predicate.attrib['field'].replace('-', '_')
             operator = predicate.attrib['operator']
             threshold_value = predicate.attrib['value']   
+        # Append to the list of children.
         children_list.append({"children": child, "feature": feature, "operator": operator, "threshold_value": threshold_value})
     
-    #Now append always the left 
+    # Instantiate the left node 
     tree_node_feature = find_feature_index_by_name(features, children_list[0]["feature"])
     tree_node_operator = operators_map[children_list[0]["operator"]]
     tree_node_threshold = float(children_list[0]["threshold_value"]) # For now only double are supported
-    # Todo : Fix Right and left correct indexes
+    # This node will be the first one to be inspected.
     tree_node_right = 0
     tree_node_left = 0
     class_res = -1
     #nodes_list.append(TreeNode(tree_node_operator, tree_node_feature, tree_node_threshold, class_res, tree_node_left, tree_node_right))
     tree_node_c_struct = TreeNode(tree_node_operator, tree_node_feature, class_res, tree_node_left, tree_node_right, tree_node_threshold)
+    # After instantiating the left node this function will be able to reconstruct the code 
     parent_node = NodeConfig(tree_node_c_struct, id, None, None)
     nodes_list.append(parent_node)
 
     #print("Node : Feature: ", tree_node_feature, "Operator: ", tree_node_operator, "Threshold: ", tree_node_threshold)
     # Set the left node index.
     parent_node.tree_node_struct.left_node = len(nodes_list)
+    # Continue inspecting if the left node is not a leaf
     if children_list[0]["children"].find("pmml:Node", namespaces) is not None:
         get_tree_nodes_from_pmml_recursively(namespaces, children_list[0]["children"], nodes_list, features, len(nodes_list))
     else:
+        # Otherwise, instantiate the node.
         operator = 0 
         feature_index = 0
         threshold = 0
         class_res =  int(children_list[0]["children"].attrib['score'].replace('-', '_'))
         left_node = -1
         right_node = -1
-        tree_node_c_struct = TreeNode(operator,feature_index, class_res, left_node, right_node, threshold)
+        tree_node_c_struct = TreeNode(operator, feature_index, class_res, left_node, right_node, threshold)
         left_node = NodeConfig(tree_node_c_struct, len(nodes_list), None, None)
         nodes_list.append(left_node)
     
@@ -207,10 +223,12 @@ def get_tree_nodes_from_pmml_recursively(namespaces, element_tree_node, nodes_li
         tree_node_c_struct = TreeNode(operator, feature_index, class_res, left_node, right_node, threshold)
         left_node = NodeConfig(tree_node_c_struct, len(nodes_list), None, None)
         nodes_list.append(left_node)
-        #print("Right Leaf : Feature: ", tree_node_feature, "Operator: ", tree_node_operator, "Threshold: ", children_list[1]["threshold_value"], "Score: ", children_list[1]["children"].attrib['score'].replace('-', '_'))
 
 def pmml_parser(file_path, out_path):
+    # Get the tree like structure of the PMML.
+    # Note that this is not the decision tree but the tree-structure of the pmml root
     tree = ET.parse(file_path)
+    # Get the root 
     root = tree.getroot()
     namespaces = {}
     namespaces["pmml"] = get_xmlns_uri(root)
